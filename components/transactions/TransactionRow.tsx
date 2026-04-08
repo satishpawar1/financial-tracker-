@@ -117,17 +117,38 @@ export function TransactionRow({ transaction: t, onEdit }: Props) {
           {(t.categories?.name ?? 'O').charAt(0).toUpperCase()}
         </span>
 
-        {/* Main info */}
+        {/* Description + date (mobile subtitle) */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{t.description}</p>
-          <p className="text-xs text-muted-foreground">
-            {t.categories?.name ?? 'Uncategorized'} · {t.household_members?.display_name ?? '—'} · {formatDate(t.transaction_date, 'MMM d')}
+          <p className="text-xs text-muted-foreground sm:hidden">
+            {t.categories?.name ?? 'Uncategorized'} · {formatDate(t.transaction_date, 'MMM d')}
           </p>
         </div>
 
+        {/* Date — desktop */}
+        <span className="hidden sm:block text-xs text-muted-foreground w-20 shrink-0">
+          {formatDate(t.transaction_date, 'MMM d')}
+        </span>
+
+        {/* Category — desktop */}
+        <div className="hidden sm:flex items-center gap-1.5 flex-1 min-w-0 shrink-0 max-w-[140px]">
+          <span
+            className="h-2 w-2 rounded-full shrink-0"
+            style={{ backgroundColor: t.categories?.color ?? '#94a3b8' }}
+          />
+          <span className="text-xs truncate text-muted-foreground">
+            {t.categories?.name ?? <span className="text-orange-500">Uncategorized</span>}
+          </span>
+        </div>
+
+        {/* Person — desktop */}
+        <span className="hidden sm:block text-xs text-muted-foreground w-24 shrink-0 truncate">
+          {t.household_members?.display_name ?? '—'}
+        </span>
+
         {/* Amount */}
         <span className={cn(
-          'text-sm font-semibold shrink-0',
+          'text-sm font-semibold shrink-0 w-24 text-right',
           t.is_income ? 'text-emerald-600' : 'text-foreground'
         )}>
           {t.is_income ? '+' : '-'}{formatCurrency(Number(t.amount))}

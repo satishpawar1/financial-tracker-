@@ -2,25 +2,21 @@
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import type { Category, HouseholdMember } from '@/types/database.types'
+import type { HouseholdMember } from '@/types/database.types'
 
 interface Props {
-  categories: Category[]
   members: HouseholdMember[]
 }
 
-export function TransactionFilterBar({ categories, members }: Props) {
+export function TransactionFilterBar({ members }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
   function set(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString())
-    if (value) {
-      params.set(key, value)
-    } else {
-      params.delete(key)
-    }
+    if (value) params.set(key, value)
+    else params.delete(key)
     router.push(`${pathname}?${params.toString()}`)
   }
 
@@ -29,15 +25,12 @@ export function TransactionFilterBar({ categories, members }: Props) {
     set(key, current === value ? null : value)
   }
 
-  const activeCategory = searchParams.get('category')
   const activePerson = searchParams.get('person')
   const uncategorized = searchParams.get('uncategorized') === 'true'
-
-  const hasFilters = activeCategory || activePerson || uncategorized
+  const hasFilters = activePerson || uncategorized
 
   return (
     <div className="flex flex-wrap gap-2 items-center">
-      {/* Uncategorized toggle */}
       <button
         onClick={() => toggle('uncategorized', 'true')}
         className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium ${
@@ -49,23 +42,6 @@ export function TransactionFilterBar({ categories, members }: Props) {
         Uncategorized
       </button>
 
-      {/* Category filters */}
-      {categories.map(c => (
-        <button
-          key={c.id}
-          onClick={() => set('category', activeCategory === c.id ? null : c.id)}
-          className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium ${
-            activeCategory === c.id
-              ? 'text-white border-transparent'
-              : 'border-border text-muted-foreground hover:border-foreground'
-          }`}
-          style={activeCategory === c.id ? { backgroundColor: c.color ?? '#94a3b8' } : {}}
-        >
-          {c.name}
-        </button>
-      ))}
-
-      {/* Person filters */}
       {members.map(m => (
         <button
           key={m.id}
@@ -80,7 +56,6 @@ export function TransactionFilterBar({ categories, members }: Props) {
         </button>
       ))}
 
-      {/* Clear all */}
       {hasFilters && (
         <Button
           variant="ghost"
@@ -88,7 +63,6 @@ export function TransactionFilterBar({ categories, members }: Props) {
           className="text-xs h-7 px-2 text-muted-foreground"
           onClick={() => {
             const params = new URLSearchParams(searchParams.toString())
-            params.delete('category')
             params.delete('person')
             params.delete('uncategorized')
             router.push(`${pathname}?${params.toString()}`)

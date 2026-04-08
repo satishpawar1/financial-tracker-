@@ -57,7 +57,6 @@ export default async function TransactionsPage({ searchParams }: Props) {
       {!uncategorized && <MonthPicker currentFrom={from} />}
 
       <TransactionFilterBar
-        categories={categories}
         members={allMembers ?? []}
       />
 
