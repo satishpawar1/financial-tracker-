@@ -19,6 +19,8 @@ export async function POST() {
     .eq('household_id', householdId)
 
   const cats = categories ?? []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
 
   // ── Step 1: Learn from all already-categorized transactions ──────────────
   // Build description → category_id map from every transaction that has a category
@@ -45,7 +47,7 @@ export async function POST() {
   if (learnedRules.length > 0) {
     // Upsert in batches of 100
     for (let i = 0; i < learnedRules.length; i += 100) {
-      await supabase
+      await db
         .from('category_rules')
         .upsert(learnedRules.slice(i, i + 100), {
           onConflict: 'household_id,description',
@@ -55,7 +57,7 @@ export async function POST() {
   }
 
   // ── Step 2: Fetch the full rules map for lookup ───────────────────────────
-  const { data: rulesRows } = await supabase
+  const { data: rulesRows } = await db
     .from('category_rules')
     .select('description, category_id')
     .eq('household_id', householdId)
@@ -102,7 +104,7 @@ export async function POST() {
   // Save new rules
   if (newRules.length > 0) {
     for (let i = 0; i < newRules.length; i += 100) {
-      await supabase
+      await db
         .from('category_rules')
         .upsert(newRules.slice(i, i + 100), {
           onConflict: 'household_id,description',

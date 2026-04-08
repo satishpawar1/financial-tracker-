@@ -55,7 +55,9 @@ export async function POST(request: NextRequest) {
   const { data: categories } = await supabase
     .from('categories').select('id, name').eq('household_id', householdId)
 
-  const { data: rulesRows } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
+  const { data: rulesRows } = await db
     .from('category_rules')
     .select('description, category_id')
     .eq('household_id', householdId)
@@ -107,7 +109,7 @@ export async function POST(request: NextRequest) {
 
   if (newRules.length > 0) {
     for (let i = 0; i < newRules.length; i += 100) {
-      await supabase.from('category_rules').upsert(newRules.slice(i, i + 100), {
+      await db.from('category_rules').upsert(newRules.slice(i, i + 100), {
         onConflict: 'household_id,description',
         ignoreDuplicates: true,
       })
