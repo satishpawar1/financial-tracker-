@@ -6,11 +6,17 @@ import { MonthlySummary } from '@/components/reports/MonthlySummary'
 import { BudgetCard } from '@/components/budgets/BudgetCard'
 import { TransactionList } from '@/components/transactions/TransactionList'
 import { AddTransactionSheet } from '@/components/transactions/AddTransactionSheet'
-import { monthLabel, currentMonthRange } from '@/lib/utils/dates'
+import { MonthPicker } from '@/components/transactions/MonthPicker'
+import { currentMonthRange } from '@/lib/utils/dates'
 import Link from 'next/link'
 import { RecurringTrigger } from './RecurringTrigger'
 
-export default async function DashboardPage() {
+interface Props {
+  searchParams: Promise<{ from?: string; to?: string }>
+}
+
+export default async function DashboardPage({ searchParams }: Props) {
+  const params = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -25,11 +31,16 @@ export default async function DashboardPage() {
     .select('*')
     .order('created_at')
 
-  const now = new Date()
-  const { from, to } = currentMonthRange()
+  const { from: defaultFrom, to: defaultTo } = currentMonthRange()
+  const from = params.from ?? defaultFrom
+  const to = params.to ?? defaultTo
+
+  const selectedDate = new Date(from + 'T12:00:00')
+  const year = selectedDate.getFullYear()
+  const month = selectedDate.getMonth() + 1
 
   const [summary, recentTx, budgets, categories] = await Promise.all([
-    getMonthlySummary(now.getFullYear(), now.getMonth() + 1),
+    getMonthlySummary(year, month),
     getTransactions({ from, to, limit: 10 }),
     getBudgetsWithSpend(),
     getCategories(),
@@ -43,8 +54,8 @@ export default async function DashboardPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">{monthLabel()}</h1>
           <p className="text-sm text-muted-foreground">Good to see you, {member?.display_name}</p>
+          <MonthPicker currentFrom={from} />
         </div>
         <AddTransactionSheet
           members={allMembers ?? []}
