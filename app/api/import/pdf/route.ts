@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parsePDF } from '@/lib/parsers/pdf-parser'
@@ -24,7 +26,16 @@ export async function POST(request: NextRequest) {
 
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
-  const { transactions, skipped } = await parsePDF(buffer)
+
+  let transactions, skipped
+  try {
+    const result = await parsePDF(buffer)
+    transactions = result.transactions
+    skipped = result.skipped
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: `PDF parsing failed: ${message}` }, { status: 500 })
+  }
 
   if (!transactions.length) {
     return NextResponse.json({ imported: 0, skipped, message: 'No parseable transactions found' })
