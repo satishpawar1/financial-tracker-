@@ -24,7 +24,7 @@ export async function createRecurringRule(input: {
   amount: number
   description: string
   is_income?: boolean
-  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly'
+  frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'
   day_of_week?: number | null
   day_of_month?: number | null
   month_of_year?: number | null
@@ -53,7 +53,7 @@ export async function updateRecurringRule(
     amount: number
     description: string
     is_income: boolean
-    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly'
+    frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'
     day_of_week: number | null
     day_of_month: number | null
     month_of_year: number | null
