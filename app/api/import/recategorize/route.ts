@@ -59,7 +59,7 @@ export async function POST() {
     .from('category_rules')
     .select('description, category_id')
     .eq('household_id', householdId)
-    .not('category_id', 'is', null)
+    .not('category_id', 'is', null) as { data: Array<{ description: string; category_id: string }> | null }
 
   const rulesMap = new Map<string, string>()
   for (const r of rulesRows ?? []) {

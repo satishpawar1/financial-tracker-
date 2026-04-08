@@ -52,11 +52,14 @@ export async function POST(request: NextRequest) {
   }
 
   // Fetch categories and existing rules
-  const [{ data: categories }, { data: rulesRows }] = await Promise.all([
-    supabase.from('categories').select('id, name').eq('household_id', householdId),
-    supabase.from('category_rules').select('description, category_id')
-      .eq('household_id', householdId).not('category_id', 'is', null),
-  ])
+  const { data: categories } = await supabase
+    .from('categories').select('id, name').eq('household_id', householdId)
+
+  const { data: rulesRows } = await supabase
+    .from('category_rules')
+    .select('description, category_id')
+    .eq('household_id', householdId)
+    .not('category_id', 'is', null) as { data: Array<{ description: string; category_id: string }> | null }
 
   const rulesMap = new Map<string, string>()
   for (const r of rulesRows ?? []) rulesMap.set(r.description, r.category_id)
