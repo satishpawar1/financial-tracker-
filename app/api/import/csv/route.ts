@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parseCSV } from '@/lib/parsers/csv-parser'
+import { guessCategory } from '@/lib/utils/categorize'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -31,6 +32,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ imported: 0, skipped, message: 'No parseable transactions found' })
   }
 
+  // Fetch categories for auto-categorization
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name')
+    .eq('household_id', householdId)
+
   // Create import batch
   const { data: batch } = await supabase
     .from('import_batches')
@@ -52,6 +59,7 @@ export async function POST(request: NextRequest) {
     paid_by: member.id,
     import_source: 'csv' as const,
     import_batch_id: batch?.id,
+    category_id: guessCategory(t.description, categories ?? []),
   }))
 
   const { error } = await supabase.from('transactions').insert(rows)
