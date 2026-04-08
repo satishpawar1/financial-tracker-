@@ -14,10 +14,13 @@ export function RecategorizeButton() {
       const res = await fetch('/api/import/recategorize', { method: 'POST' })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Failed')
-      if (json.updated === 0) {
-        toast.info('No uncategorized transactions found')
+      if (json.updated === 0 && json.still_uncategorized === 0) {
+        toast.info('All transactions already categorized')
       } else {
-        toast.success(`Categorized ${json.updated} of ${json.total} uncategorized transactions`)
+        toast.success(
+          `Categorized ${json.updated} transactions` +
+          (json.still_uncategorized > 0 ? ` · ${json.still_uncategorized} still need manual review` : '')
+        )
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed')

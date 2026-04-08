@@ -53,9 +53,14 @@ export interface CategoryLookup {
   name: string
 }
 
+/** Normalize a description for consistent DB lookup */
+export function normalizeDescription(desc: string): string {
+  return desc.toLowerCase().replace(/\s+/g, ' ').trim()
+}
+
 /**
- * Given a transaction description and the household's category list,
- * returns the best-matching category ID, or null if no match found.
+ * Keyword-only guess — used as fallback when no DB rule exists.
+ * Returns matching category ID or null.
  */
 export function guessCategory(
   description: string,
