@@ -31,6 +31,7 @@ export function FileUpload({ onSuccess }: Props) {
   const [status, setStatus] = useState<UploadStatus>('idle')
   const [result, setResult] = useState<UploadResult | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   async function handleFile(file: File) {
     const source = detectSource(file)
@@ -59,8 +60,10 @@ export function FileUpload({ onSuccess }: Props) {
       toast.success(`Imported ${json.imported} transactions`)
       onSuccess?.({ imported: json.imported, skipped: json.skipped }, source)
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Upload failed'
       setStatus('error')
-      toast.error(err instanceof Error ? err.message : 'Upload failed')
+      setErrorMessage(message)
+      toast.error(message, { duration: 60000 })
     }
   }
 
@@ -118,6 +121,21 @@ export function FileUpload({ onSuccess }: Props) {
               onClick={e => { e.stopPropagation(); setStatus('idle'); setResult(null) }}
             >
               Upload another
+            </Button>
+          </div>
+        ) : status === 'error' && errorMessage ? (
+          <div className="flex flex-col items-center gap-3">
+            <AlertCircle className="h-10 w-10 text-destructive" />
+            <div>
+              <p className="font-semibold text-destructive">Upload failed</p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-sm break-all">{errorMessage}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={e => { e.stopPropagation(); setStatus('idle'); setErrorMessage(null) }}
+            >
+              Try again
             </Button>
           </div>
         ) : (
