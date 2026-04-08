@@ -28,6 +28,7 @@ interface Props {
 const FREQ_LABELS: Record<string, string> = {
   daily: 'Daily',
   weekly: 'Weekly',
+  biweekly: 'Bi-weekly',
   monthly: 'Monthly',
   yearly: 'Yearly',
 }

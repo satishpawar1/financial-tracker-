@@ -36,7 +36,7 @@ export function RecurringForm({ members, categories, defaultMemberId, rule, onSu
   const [categoryId, setCategoryId] = useState<string | null>(rule?.category_id ?? null)
   const [paidBy, setPaidBy] = useState(rule?.paid_by ?? defaultMemberId)
   const [isIncome, setIsIncome] = useState(rule?.is_income ?? false)
-  const [frequency, setFrequency] = useState<'daily'|'weekly'|'monthly'|'yearly'>((rule?.frequency as 'daily'|'weekly'|'monthly'|'yearly') ?? 'monthly')
+  const [frequency, setFrequency] = useState<'daily'|'weekly'|'biweekly'|'monthly'|'yearly'>((rule?.frequency as 'daily'|'weekly'|'biweekly'|'monthly'|'yearly') ?? 'monthly')
   const [dayOfWeek, setDayOfWeek] = useState<string>(rule?.day_of_week != null ? String(rule.day_of_week) : '1')
   const [dayOfMonth, setDayOfMonth] = useState<string>(rule?.day_of_month != null ? String(rule.day_of_month) : '1')
   const [startDate, setStartDate] = useState(rule?.start_date ?? toISODate(new Date()))
@@ -57,6 +57,7 @@ export function RecurringForm({ members, categories, defaultMemberId, rule, onSu
       frequency,
       day_of_week: frequency === 'weekly' ? parseInt(dayOfWeek) : null,
       day_of_month: (frequency === 'monthly' || frequency === 'yearly') ? parseInt(dayOfMonth) : null,
+      // biweekly uses start_date as the anchor — no day_of_week/day_of_month needed
       start_date: startDate,
       end_date: endDate || null,
     }
@@ -111,11 +112,18 @@ export function RecurringForm({ members, categories, defaultMemberId, rule, onSu
           <SelectContent>
             <SelectItem value="daily">Daily</SelectItem>
             <SelectItem value="weekly">Weekly</SelectItem>
+            <SelectItem value="biweekly">Bi-weekly (every 2 weeks)</SelectItem>
             <SelectItem value="monthly">Monthly</SelectItem>
             <SelectItem value="yearly">Yearly</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {frequency === 'biweekly' && (
+        <p className="text-xs text-muted-foreground bg-muted rounded-md px-3 py-2">
+          Repeats every 14 days starting from the start date below. Set the start date to your next payday.
+        </p>
+      )}
 
       {frequency === 'weekly' && (
         <div className="space-y-1.5">

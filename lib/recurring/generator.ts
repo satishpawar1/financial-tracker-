@@ -10,6 +10,7 @@ import {
   format,
   getDay,
   getDate,
+  differenceInDays,
 } from 'date-fns'
 import type { RecurringRule } from '@/types/database.types'
 
@@ -95,6 +96,12 @@ function matchesRule(rule: RecurringRule, date: Date): boolean {
       return true
     case 'weekly':
       return rule.day_of_week === null || getDay(date) === rule.day_of_week
+    case 'biweekly': {
+      // Every 14 days from the rule's start_date
+      const start = parseISO(rule.start_date)
+      const diff = differenceInDays(date, start)
+      return diff >= 0 && diff % 14 === 0
+    }
     case 'monthly':
       return rule.day_of_month === null || getDate(date) === rule.day_of_month
     case 'yearly': {
