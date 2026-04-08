@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { FileUpload } from '@/components/import/FileUpload'
+import { RecategorizeButton } from '@/components/import/RecategorizeButton'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatDate } from '@/lib/utils/dates'
 
@@ -17,7 +18,10 @@ export default async function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold">Import</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Import</h1>
+        <RecategorizeButton />
+      </div>
 
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">
