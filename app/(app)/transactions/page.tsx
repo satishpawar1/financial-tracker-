@@ -3,6 +3,7 @@ import { getTransactions } from '@/actions/transactions'
 import { getCategories } from '@/actions/categories'
 import { TransactionList } from '@/components/transactions/TransactionList'
 import { AddTransactionSheet } from '@/components/transactions/AddTransactionSheet'
+import { MonthPicker } from '@/components/transactions/MonthPicker'
 import { currentMonthRange } from '@/lib/utils/dates'
 
 interface Props {
@@ -26,14 +27,15 @@ export default async function TransactionsPage({ searchParams }: Props) {
     .order('created_at')
 
   const { from: defaultFrom, to: defaultTo } = currentMonthRange()
+  const from = params.from ?? defaultFrom
+  const to = params.to ?? defaultTo
 
   const [transactions, categories] = await Promise.all([
     getTransactions({
-      from: params.from ?? defaultFrom,
-      to: params.to ?? defaultTo,
+      from,
+      to,
       categoryId: params.category,
       paidBy: params.person,
-      isIncome: false,
     }),
     getCategories(),
   ])
@@ -48,6 +50,8 @@ export default async function TransactionsPage({ searchParams }: Props) {
           defaultMemberId={member?.id ?? ''}
         />
       </div>
+
+      <MonthPicker currentFrom={from} />
 
       <TransactionList
         transactions={transactions as unknown as Parameters<typeof TransactionList>[0]['transactions']}
