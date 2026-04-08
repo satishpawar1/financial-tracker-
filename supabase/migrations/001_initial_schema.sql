@@ -78,7 +78,7 @@ create table recurring_rules (
   amount         numeric(12,2) not null check (amount > 0),
   description    text not null,
   is_income      boolean not null default false,
-  frequency      text not null check (frequency in ('daily','weekly','monthly','yearly')),
+  frequency      text not null check (frequency in ('daily','weekly','biweekly','monthly','yearly')),
   day_of_week    int check (day_of_week between 0 and 6),
   day_of_month   int check (day_of_month between 1 and 31),
   month_of_year  int check (month_of_year between 1 and 12),
