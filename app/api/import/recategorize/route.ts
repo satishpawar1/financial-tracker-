@@ -33,6 +33,7 @@ export async function POST() {
   // Collect rules: for each description, pick the most-used category
   const freq: Record<string, Record<string, number>> = {}
   for (const tx of categorized ?? []) {
+    if (!tx.category_id) continue
     const key = normalizeDescription(tx.description)
     if (!freq[key]) freq[key] = {}
     freq[key][tx.category_id] = (freq[key][tx.category_id] ?? 0) + 1
