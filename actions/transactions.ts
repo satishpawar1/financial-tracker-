@@ -11,6 +11,7 @@ export interface TransactionFilters {
   paidBy?: string
   isIncome?: boolean
   search?: string
+  uncategorized?: boolean
   limit?: number
   offset?: number
 }
@@ -33,6 +34,7 @@ export async function getTransactions(filters: TransactionFilters = {}) {
   if (filters.categoryId) query = query.eq('category_id', filters.categoryId)
   if (filters.paidBy) query = query.eq('paid_by', filters.paidBy)
   if (filters.isIncome !== undefined) query = query.eq('is_income', filters.isIncome)
+  if (filters.uncategorized) query = query.is('category_id', null)
   if (filters.search) query = query.ilike('description', `%${filters.search}%`)
   if (filters.limit) query = query.limit(filters.limit)
   if (filters.offset) query = query.range(filters.offset, filters.offset + (filters.limit ?? 50) - 1)

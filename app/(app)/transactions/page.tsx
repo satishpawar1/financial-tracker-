@@ -4,10 +4,11 @@ import { getCategories } from '@/actions/categories'
 import { TransactionList } from '@/components/transactions/TransactionList'
 import { AddTransactionSheet } from '@/components/transactions/AddTransactionSheet'
 import { MonthPicker } from '@/components/transactions/MonthPicker'
+import { TransactionFilterBar } from '@/components/transactions/TransactionFilterBar'
 import { currentMonthRange } from '@/lib/utils/dates'
 
 interface Props {
-  searchParams: Promise<{ from?: string; to?: string; category?: string; person?: string }>
+  searchParams: Promise<{ from?: string; to?: string; category?: string; person?: string; uncategorized?: string }>
 }
 
 export default async function TransactionsPage({ searchParams }: Props) {
@@ -29,13 +30,15 @@ export default async function TransactionsPage({ searchParams }: Props) {
   const { from: defaultFrom, to: defaultTo } = currentMonthRange()
   const from = params.from ?? defaultFrom
   const to = params.to ?? defaultTo
+  const uncategorized = params.uncategorized === 'true'
 
   const [transactions, categories] = await Promise.all([
     getTransactions({
-      from,
-      to,
+      from: uncategorized ? undefined : from,
+      to: uncategorized ? undefined : to,
       categoryId: params.category,
       paidBy: params.person,
+      uncategorized,
     }),
     getCategories(),
   ])
@@ -51,7 +54,18 @@ export default async function TransactionsPage({ searchParams }: Props) {
         />
       </div>
 
-      <MonthPicker currentFrom={from} />
+      {!uncategorized && <MonthPicker currentFrom={from} />}
+
+      <TransactionFilterBar
+        categories={categories}
+        members={allMembers ?? []}
+      />
+
+      {uncategorized && (
+        <p className="text-xs text-muted-foreground">
+          Showing all {transactions.length} uncategorized transactions across all time
+        </p>
+      )}
 
       <TransactionList
         transactions={transactions as unknown as Parameters<typeof TransactionList>[0]['transactions']}

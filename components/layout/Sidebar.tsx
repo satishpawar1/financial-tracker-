@@ -11,6 +11,7 @@ import {
   BarChart3,
   Upload,
   Download,
+  Tags,
   Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -23,6 +24,7 @@ const navItems = [
   { href: '/budgets', icon: PiggyBank, label: 'Budgets' },
   { href: '/reports', icon: BarChart3, label: 'Reports' },
   { href: '/import', icon: Upload, label: 'Import' },
+  { href: '/rules', icon: Tags, label: 'Category Rules' },
   { href: '/export', icon: Download, label: 'Export' },
   { href: '/settings', icon: Settings, label: 'Settings' },
 ]
