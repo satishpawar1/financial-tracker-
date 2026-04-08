@@ -2,26 +2,41 @@ import { getMonthlySummary, getCategoryBreakdown, getMonthlyTrends } from '@/act
 import { MonthlySummary } from '@/components/reports/MonthlySummary'
 import { CategoryBreakdown } from '@/components/reports/CategoryBreakdown'
 import { TrendChart } from '@/components/reports/TrendChart'
+import { MonthPicker } from '@/components/transactions/MonthPicker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { currentMonthRange, monthLabel } from '@/lib/utils/dates'
+import { currentMonthRange } from '@/lib/utils/dates'
+import { format } from 'date-fns'
 
-export default async function ReportsPage() {
-  const now = new Date()
-  const { from, to } = currentMonthRange()
+interface Props {
+  searchParams: Promise<{ from?: string; to?: string }>
+}
+
+export default async function ReportsPage({ searchParams }: Props) {
+  const params = await searchParams
+  const { from: defaultFrom, to: defaultTo } = currentMonthRange()
+  const from = params.from ?? defaultFrom
+  const to = params.to ?? defaultTo
+
+  const selectedDate = new Date(from + 'T12:00:00')
+  const year = selectedDate.getFullYear()
+  const month = selectedDate.getMonth() + 1
 
   const [summary, categoryData, trends] = await Promise.all([
-    getMonthlySummary(now.getFullYear(), now.getMonth() + 1),
+    getMonthlySummary(year, month),
     getCategoryBreakdown(from, to),
     getMonthlyTrends(6),
   ])
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold">Reports</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Reports</h1>
+        <MonthPicker currentFrom={from} />
+      </div>
 
       <div className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          {monthLabel()} Summary
+          {format(selectedDate, 'MMMM yyyy')} Summary
         </h2>
         <MonthlySummary
           totalIncome={summary.totalIncome}
