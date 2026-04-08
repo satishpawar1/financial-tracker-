@@ -1,5 +1,14 @@
 export const runtime = 'nodejs'
 
+// Polyfill browser APIs required by pdfjs-dist in Node.js environment
+if (typeof globalThis.DOMMatrix === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { DOMMatrix, DOMPoint, DOMRect } = require('dommatrix')
+  globalThis.DOMMatrix = DOMMatrix
+  globalThis.DOMPoint = DOMPoint
+  globalThis.DOMRect = DOMRect
+}
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parsePDF } from '@/lib/parsers/pdf-parser'
