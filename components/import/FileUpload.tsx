@@ -127,7 +127,11 @@ export function FileUpload({ onSuccess }: Props) {
               <p className="font-semibold">Drop your statement here</p>
               <p className="text-sm text-muted-foreground">Supports CSV, PDF, and Excel (.xlsx)</p>
             </div>
-            <Button variant="outline" size="sm" onClick={e => e.stopPropagation()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={e => { e.stopPropagation(); inputRef.current?.click() }}
+            >
               Browse files
             </Button>
           </div>
