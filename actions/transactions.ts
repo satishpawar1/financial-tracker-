@@ -212,6 +212,39 @@ export async function getMonthlyTrends(months: number = 6) {
   return results
 }
 
+export async function getCategoryTrend(categoryId: string, months: number = 12) {
+  const supabase = await createClient()
+  const results = []
+
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(1)
+    d.setMonth(d.getMonth() - i)
+    const year = d.getFullYear()
+    const month = d.getMonth() + 1
+    const from = `${year}-${String(month).padStart(2, '0')}-01`
+    const to = new Date(year, month, 0).toISOString().split('T')[0]
+
+    const { data } = await supabase
+      .from('transactions')
+      .select('amount')
+      .eq('category_id', categoryId)
+      .eq('is_income', false)
+      .gte('transaction_date', from)
+      .lte('transaction_date', to)
+
+    const total = (data ?? []).reduce((sum, t) => sum + Number(t.amount), 0)
+
+    results.push({
+      month: `${year}-${String(month).padStart(2, '0')}`,
+      label: d.toLocaleString('default', { month: 'short', year: '2-digit' }),
+      amount: total,
+    })
+  }
+
+  return results
+}
+
 // ── internal helper ──────────────────────────────────────────────────────────
 async function getHouseholdId(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data, error } = await supabase.rpc('get_my_household_id')
