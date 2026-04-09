@@ -138,7 +138,8 @@ export function CategoryTrendChart({ categories, initialCategoryId, initialData 
                 width={44}
               />
               <Tooltip
-                formatter={(value: number) => [formatCurrency(value), '']}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={(value: any) => [formatCurrency(Number(value)), '']}
                 labelStyle={{ fontWeight: 600 }}
               />
               <ReferenceLine y={avg} stroke="#94a3b8" strokeDasharray="4 2" label={{ value: 'avg', fontSize: 10, fill: '#94a3b8' }} />
