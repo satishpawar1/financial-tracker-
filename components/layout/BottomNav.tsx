@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   ArrowLeftRight,
-  PiggyBank,
+  RefreshCw,
   BarChart3,
   MoreHorizontal,
 } from 'lucide-react'
@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Home' },
   { href: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
-  { href: '/budgets', icon: PiggyBank, label: 'Budgets' },
+  { href: '/recurring', icon: RefreshCw, label: 'Recurring' },
   { href: '/reports', icon: BarChart3, label: 'Reports' },
   { href: '/settings', icon: MoreHorizontal, label: 'More' },
 ]

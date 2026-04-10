@@ -10,8 +10,9 @@ import { Badge } from '@/components/ui/badge'
 import { deleteCategory } from '@/actions/categories'
 import type { Household, HouseholdMember, Category } from '@/types/database.types'
 import { toast } from 'sonner'
-import { Trash2, Copy, Plus } from 'lucide-react'
+import { Trash2, Copy, Plus, TrendingUp, PiggyBank, Tags, Upload, Download, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface Invite {
   id: string
@@ -81,6 +82,29 @@ export function SettingsClient({ household, members, currentUserId, invites: ini
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold">Settings</h1>
+
+      {/* Quick navigation — visible on mobile only */}
+      <Card className="sm:hidden">
+        <CardContent className="p-0">
+          {[
+            { href: '/income', icon: TrendingUp, label: 'Income' },
+            { href: '/budgets', icon: PiggyBank, label: 'Budgets' },
+            { href: '/rules', icon: Tags, label: 'Category Rules' },
+            { href: '/import', icon: Upload, label: 'Import' },
+            { href: '/export', icon: Download, label: 'Export' },
+          ].map(({ href, icon: Icon, label }, i, arr) => (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-3 px-4 py-3 text-sm font-medium hover:bg-muted transition-colors${i < arr.length - 1 ? ' border-b' : ''}`}
+            >
+              <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="flex-1">{label}</span>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          ))}
+        </CardContent>
+      </Card>
 
       {/* Household */}
       <Card>
