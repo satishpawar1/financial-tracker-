@@ -73,9 +73,9 @@ export function TransactionList({ transactions, members, categories, defaultMemb
   }
 
   const cols: { key: SortKey; label: string; className: string }[] = [
-    { key: 'date', label: 'Date', className: 'w-20' },
-    { key: 'category', label: 'Category', className: 'flex-1' },
-    { key: 'person', label: 'Person', className: 'w-24 hidden sm:block' },
+    { key: 'date', label: 'Date', className: 'w-20 hidden sm:flex' },
+    { key: 'category', label: 'Category', className: 'flex-1 hidden sm:flex' },
+    { key: 'person', label: 'Person', className: 'w-24 hidden sm:flex' },
     { key: 'amount', label: 'Amount', className: 'w-24 text-right' },
   ]
 
