@@ -212,6 +212,43 @@ export async function getMonthlyTrends(months: number = 6) {
   return results
 }
 
+export async function getAnnualSummary(year: number) {
+  const supabase = await createClient()
+  const from = `${year}-01-01`
+  const to = `${year}-12-31`
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('amount, is_income')
+    .gte('transaction_date', from)
+    .lte('transaction_date', to)
+
+  if (error) throw new Error(error.message)
+
+  let totalIncome = 0
+  let totalExpenses = 0
+  for (const t of data) {
+    if (t.is_income) totalIncome += Number(t.amount)
+    else totalExpenses += Number(t.amount)
+  }
+
+  const now = new Date()
+  const isCurrentYear = year === now.getFullYear()
+  // For current year use elapsed months; for past years use 12
+  const monthsElapsed = isCurrentYear ? now.getMonth() + 1 : 12
+
+  return {
+    totalIncome,
+    totalExpenses,
+    net: totalIncome - totalExpenses,
+    monthsElapsed,
+    avgMonthlyIncome: monthsElapsed > 0 ? totalIncome / monthsElapsed : 0,
+    avgMonthlyExpenses: monthsElapsed > 0 ? totalExpenses / monthsElapsed : 0,
+    isCurrentYear,
+    year,
+  }
+}
+
 export async function getCategoryTrend(categoryId: string, months: number = 12) {
   const supabase = await createClient()
   const results = []

@@ -1,6 +1,7 @@
-import { getMonthlySummary, getCategoryBreakdown, getMonthlyTrends, getCategoryTrend } from '@/actions/transactions'
+import { getMonthlySummary, getCategoryBreakdown, getMonthlyTrends, getCategoryTrend, getAnnualSummary } from '@/actions/transactions'
 import { getCategories } from '@/actions/categories'
 import { MonthlySummary } from '@/components/reports/MonthlySummary'
+import { AnnualSummary } from '@/components/reports/AnnualSummary'
 import { CategoryBreakdown } from '@/components/reports/CategoryBreakdown'
 import { TrendChart } from '@/components/reports/TrendChart'
 import { CategoryTrendChart } from '@/components/reports/CategoryTrendChart'
@@ -28,8 +29,9 @@ export default async function ReportsPage({ searchParams }: Props) {
   const expenseCategories = categories.filter(c => c.name !== 'Salary')
   const defaultCategoryId = expenseCategories[0]?.id ?? ''
 
-  const [summary, categoryData, trends, categoryTrend] = await Promise.all([
+  const [summary, annualData, categoryData, trends, categoryTrend] = await Promise.all([
     getMonthlySummary(year, month),
+    getAnnualSummary(year),
     getCategoryBreakdown(from, to),
     getMonthlyTrends(6),
     defaultCategoryId ? getCategoryTrend(defaultCategoryId, 12) : Promise.resolve([]),
@@ -51,6 +53,13 @@ export default async function ReportsPage({ searchParams }: Props) {
           totalExpenses={summary.totalExpenses}
           net={summary.net}
         />
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          {annualData.isCurrentYear ? `${year} Year to Date` : `${year} Annual`}
+        </h2>
+        <AnnualSummary {...annualData} />
       </div>
 
       {/* Per-person breakdown */}
