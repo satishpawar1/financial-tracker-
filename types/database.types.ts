@@ -209,6 +209,8 @@ export type Database = {
           transaction_date: string
           is_income: boolean
           notes: string | null
+          utility_type: string | null
+          utility_provider: string | null
           import_source: string | null
           import_batch_id: string | null
           recurring_id: string | null
@@ -225,6 +227,8 @@ export type Database = {
           transaction_date: string
           is_income?: boolean
           notes?: string | null
+          utility_type?: string | null
+          utility_provider?: string | null
           import_source?: string | null
           import_batch_id?: string | null
           recurring_id?: string | null
@@ -241,6 +245,8 @@ export type Database = {
           transaction_date?: string
           is_income?: boolean
           notes?: string | null
+          utility_type?: string | null
+          utility_provider?: string | null
           import_source?: string | null
           import_batch_id?: string | null
           recurring_id?: string | null

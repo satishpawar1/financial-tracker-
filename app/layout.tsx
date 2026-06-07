@@ -6,13 +6,13 @@ import './globals.css'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Finances',
+  title: 'JeevaFin',
   description: 'Household financial tracker',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Finances',
+    title: 'JeevaFin',
   },
   icons: {
     icon: '/icon-192.png',
@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Finances" />
+        <meta name="apple-mobile-web-app-title" content="JeevaFin" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={`${geist.className} antialiased`}>

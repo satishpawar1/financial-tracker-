@@ -1,6 +1,6 @@
 {
-  "name": "Finances",
-  "short_name": "Finances",
+  "name": "JeevaFin",
+  "short_name": "JeevaFin",
   "description": "Household financial tracker",
   "start_url": "/dashboard",
   "display": "standalone",

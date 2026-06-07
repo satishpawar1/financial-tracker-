@@ -1,10 +1,12 @@
+import { resolve } from 'path'
+import { pathToFileURL } from 'url'
 import type { ParseResult, ParsedTransaction } from './csv-parser'
 
 export async function parsePDF(buffer: Buffer): Promise<ParseResult> {
   const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
 
-  // Disable worker (server-side)
-  pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+  const workerPath = resolve(process.cwd(), 'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs')
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href
 
   const uint8Array = new Uint8Array(buffer)
   const loadingTask = pdfjsLib.getDocument({ data: uint8Array, useWorkerFetch: false, isEvalSupported: false, useSystemFonts: true })

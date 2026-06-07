@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { NotificationBell } from './NotificationBell'
 import { RealtimeProvider } from './RealtimeProvider'
+import { ChatButton } from '@/components/chat/ChatButton'
 import { getNotifications, getUnreadCount } from '@/actions/notifications'
 
 interface Props {
@@ -33,6 +34,7 @@ export async function AppShell({ children }: Props) {
         </main>
       </div>
       <BottomNav />
+      <ChatButton />
     </div>
   )
 }

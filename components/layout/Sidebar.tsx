@@ -13,6 +13,7 @@ import {
   Download,
   Tags,
   Settings,
+  Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -25,6 +26,7 @@ const navItems = [
   { href: '/reports', icon: BarChart3, label: 'Reports' },
   { href: '/import', icon: Upload, label: 'Import' },
   { href: '/rules', icon: Tags, label: 'Category Rules' },
+  { href: '/settings/utilities', icon: Zap, label: 'Utility Types' },
   { href: '/export', icon: Download, label: 'Export' },
   { href: '/settings', icon: Settings, label: 'Settings' },
 ]

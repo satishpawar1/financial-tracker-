@@ -1,59 +1,36 @@
-import { getMonthlySummary, getCategoryBreakdown, getMonthlyTrends, getCategoryTrend, getAnnualSummary } from '@/actions/transactions'
+import { getCategoryBreakdown, getMonthlyTrends, getCategoryTrend, getAnnualSummary, getUtilityBreakdown } from '@/actions/transactions'
 import { getCategories } from '@/actions/categories'
-import { MonthlySummary } from '@/components/reports/MonthlySummary'
 import { AnnualSummary } from '@/components/reports/AnnualSummary'
 import { CategoryBreakdown } from '@/components/reports/CategoryBreakdown'
 import { TrendChart } from '@/components/reports/TrendChart'
 import { CategoryTrendChart } from '@/components/reports/CategoryTrendChart'
-import { MonthPicker } from '@/components/transactions/MonthPicker'
+import { UtilityBreakdown } from '@/components/reports/UtilityBreakdown'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { currentMonthRange } from '@/lib/utils/dates'
-import { format } from 'date-fns'
 
-interface Props {
-  searchParams: Promise<{ from?: string; to?: string }>
-}
+export const dynamic = 'force-dynamic'
 
-export default async function ReportsPage({ searchParams }: Props) {
-  const params = await searchParams
-  const { from: defaultFrom, to: defaultTo } = currentMonthRange()
-  const from = params.from ?? defaultFrom
-  const to = params.to ?? defaultTo
-
-  const selectedDate = new Date(from + 'T12:00:00')
-  const year = selectedDate.getFullYear()
-  const month = selectedDate.getMonth() + 1
+export default async function ReportsPage() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const from = `${year}-01-01`
+  const to = now.toISOString().split('T')[0]
 
   const categories = await getCategories()
   // Exclude Salary category from the trend picker (it's income, not expense)
   const expenseCategories = categories.filter(c => c.name !== 'Salary')
   const defaultCategoryId = expenseCategories[0]?.id ?? ''
 
-  const [summary, annualData, categoryData, trends, categoryTrend] = await Promise.all([
-    getMonthlySummary(year, month),
+  const [annualData, categoryData, trends, categoryTrend, utilityBreakdown] = await Promise.all([
     getAnnualSummary(year),
     getCategoryBreakdown(from, to),
     getMonthlyTrends(6),
     defaultCategoryId ? getCategoryTrend(defaultCategoryId, 12) : Promise.resolve([]),
+    getUtilityBreakdown(6),
   ])
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Reports</h1>
-        <MonthPicker currentFrom={from} />
-      </div>
-
-      <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          {format(selectedDate, 'MMMM yyyy')} Summary
-        </h2>
-        <MonthlySummary
-          totalIncome={summary.totalIncome}
-          totalExpenses={summary.totalExpenses}
-          net={summary.net}
-        />
-      </div>
+      <h1 className="text-xl font-bold">Reports</h1>
 
       <div className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -62,15 +39,17 @@ export default async function ReportsPage({ searchParams }: Props) {
         <AnnualSummary {...annualData} />
       </div>
 
-      {/* Per-person breakdown */}
-      {Object.keys(summary.byPerson).length > 0 && (
+      {/* Per-person breakdown — YTD */}
+      {Object.keys(annualData.byPerson).length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">By Person</CardTitle>
+            <CardTitle className="text-base">
+              By Person — {annualData.isCurrentYear ? `${year} YTD` : `${year} Annual`}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {Object.values(summary.byPerson).map(p => (
+              {Object.values(annualData.byPerson).map(p => (
                 <div key={p.name} className="flex justify-between text-sm">
                   <span className="font-medium">{p.name}</span>
                   <div className="flex gap-4 text-muted-foreground">
@@ -105,6 +84,17 @@ export default async function ReportsPage({ searchParams }: Props) {
               initialCategoryId={defaultCategoryId}
               initialData={categoryTrend}
             />
+          </CardContent>
+        </Card>
+      )}
+
+      {utilityBreakdown.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Utility Provider Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UtilityBreakdown data={utilityBreakdown} />
           </CardContent>
         </Card>
       )}

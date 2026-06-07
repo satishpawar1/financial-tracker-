@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { deleteCategory } from '@/actions/categories'
 import type { Household, HouseholdMember, Category } from '@/types/database.types'
 import { toast } from 'sonner'
-import { Trash2, Copy, Plus, TrendingUp, PiggyBank, Tags, Upload, Download, ChevronRight } from 'lucide-react'
+import { Trash2, Copy, Plus, TrendingUp, PiggyBank, Tags, Upload, Download, ChevronRight, Zap } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -83,13 +83,14 @@ export function SettingsClient({ household, members, currentUserId, invites: ini
     <div className="space-y-6">
       <h1 className="text-xl font-bold">Settings</h1>
 
-      {/* Quick navigation — visible on mobile only */}
-      <Card className="sm:hidden">
+      {/* Quick navigation */}
+      <Card>
         <CardContent className="p-0">
           {[
             { href: '/income', icon: TrendingUp, label: 'Income' },
             { href: '/budgets', icon: PiggyBank, label: 'Budgets' },
             { href: '/rules', icon: Tags, label: 'Category Rules' },
+            { href: '/settings/utilities', icon: Zap, label: 'Utility Types' },
             { href: '/import', icon: Upload, label: 'Import' },
             { href: '/export', icon: Download, label: 'Export' },
           ].map(({ href, icon: Icon, label }, i, arr) => (

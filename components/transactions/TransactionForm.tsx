@@ -4,12 +4,14 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AmountInput } from '@/components/shared/AmountInput'
 import { CategoryPicker } from '@/components/shared/CategoryPicker'
 import { PersonPicker } from '@/components/shared/PersonPicker'
 import { createTransaction, updateTransaction } from '@/actions/transactions'
 import type { Category, HouseholdMember, Transaction } from '@/types/database.types'
 import { toISODate } from '@/lib/utils/dates'
+import { UTILITY_TYPES } from '@/lib/utils/utility-types'
 import { toast } from 'sonner'
 
 interface Props {
@@ -37,6 +39,11 @@ export function TransactionForm({
   const [paidBy, setPaidBy] = useState(transaction?.paid_by ?? defaultMemberId)
   const [isIncome, setIsIncome] = useState(transaction?.is_income ?? defaultIsIncome)
   const [notes, setNotes] = useState(transaction?.notes ?? '')
+  const [utilityType, setUtilityType] = useState<string>(transaction?.utility_type ?? '')
+  const [utilityProvider, setUtilityProvider] = useState(transaction?.utility_provider ?? '')
+
+  const selectedCategory = categories.find(c => c.id === categoryId)
+  const isUtility = !isIncome && selectedCategory?.name === 'Utilities'
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -52,6 +59,13 @@ export function TransactionForm({
 
     startTransition(async () => {
       try {
+        const utilityFields = isUtility
+          ? {
+              utility_type: utilityType || null,
+              utility_provider: utilityProvider.trim() || null,
+            }
+          : { utility_type: null, utility_provider: null }
+
         if (transaction) {
           await updateTransaction(transaction.id, {
             paid_by: paidBy,
@@ -61,6 +75,7 @@ export function TransactionForm({
             transaction_date: date,
             is_income: isIncome,
             notes: notes.trim() || null,
+            ...utilityFields,
           })
           toast.success('Transaction updated')
         } else {
@@ -72,12 +87,14 @@ export function TransactionForm({
             transaction_date: date,
             is_income: isIncome,
             notes: notes.trim() || null,
+            ...utilityFields,
           })
           toast.success(isIncome ? 'Income added' : 'Expense added')
-          // Reset form
           setAmount('')
           setDescription('')
           setNotes('')
+          setUtilityType('')
+          setUtilityProvider('')
           setDate(toISODate(new Date()))
         }
         onSuccess?.()
@@ -140,6 +157,35 @@ export function TransactionForm({
         <Label>Category</Label>
         <CategoryPicker categories={categories} value={categoryId} onChange={setCategoryId} />
       </div>
+
+      {/* Utility sub-fields — only shown when Utilities category is selected */}
+      {isUtility && (
+        <div className="rounded-lg border border-dashed px-3 py-3 space-y-3">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Utility Details</p>
+          <div className="space-y-1.5">
+            <Label htmlFor="utility-type">Utility Type</Label>
+            <Select value={utilityType} onValueChange={v => setUtilityType(v ?? '')}>
+              <SelectTrigger id="utility-type">
+                <SelectValue placeholder="Select type…" />
+              </SelectTrigger>
+              <SelectContent>
+                {UTILITY_TYPES.map(t => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="utility-provider">Provider (optional)</Label>
+            <Input
+              id="utility-provider"
+              value={utilityProvider}
+              onChange={e => setUtilityProvider(e.target.value)}
+              placeholder="e.g. PG&E, Comcast, City Water…"
+            />
+          </div>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <Label>Paid by</Label>
