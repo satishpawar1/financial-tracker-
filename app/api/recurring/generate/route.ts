@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { generateOccurrences } from '@/lib/recurring/generator'
 
+export const dynamic = 'force-dynamic'
+
 // Called by Vercel Cron daily, and on-demand from the dashboard
-export async function POST(request: NextRequest) {
+async function generateRecurringTransactions(request: NextRequest) {
   // Verify cron secret when called by Vercel scheduler
   const authHeader = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
+  const isCronRequest = Boolean(cronSecret && authHeader === `Bearer ${cronSecret}`)
+
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     // Also allow authenticated users to trigger manually
     const supabase = await createClient()
@@ -14,7 +19,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = await createClient()
+  const supabase = isCronRequest ? createAdminClient() : await createClient()
   const today = new Date()
 
   // Fetch all active rules that haven't been generated today
@@ -55,4 +60,12 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ generated: totalGenerated })
+}
+
+export async function GET(request: NextRequest) {
+  return generateRecurringTransactions(request)
+}
+
+export async function POST(request: NextRequest) {
+  return generateRecurringTransactions(request)
 }

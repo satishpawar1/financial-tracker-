@@ -6,7 +6,15 @@
     },
     {
       "path": "/api/ping",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/ping",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/ping",
+      "schedule": "0 20 * * *"
     }
   ]
 }
