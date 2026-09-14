@@ -65,12 +65,13 @@ const SILENCE_TIMEOUT_MS = 2000
 // we silently restart recognition underneath so the user never notices.
 const MAX_AUTO_RESTARTS = 6
 
-export function useVoiceInput(onFinalResult: (text: string) => void) {
+export function useVoiceInput(onFinalResult: (text: string) => void, onError?: (message: string) => void) {
   const supported = useSyncExternalStore(subscribeNever, getSupportedSnapshot, getSupportedServerSnapshot)
   const [listening, setListening] = useState(false)
   const [interimTranscript, setInterimTranscript] = useState('')
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
   const onFinalResultRef = useRef(onFinalResult)
+  const onErrorRef = useRef(onError)
   const finalChunksRef = useRef<string[]>([])
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sessionActiveRef = useRef(false)
@@ -79,6 +80,9 @@ export function useVoiceInput(onFinalResult: (text: string) => void) {
   useEffect(() => {
     onFinalResultRef.current = onFinalResult
   }, [onFinalResult])
+  useEffect(() => {
+    onErrorRef.current = onError
+  }, [onError])
 
   const clearSilenceTimer = useCallback(() => {
     if (silenceTimerRef.current) {
@@ -131,6 +135,11 @@ export function useVoiceInput(onFinalResult: (text: string) => void) {
     }
     recognition.onerror = event => {
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        onErrorRef.current?.(
+          event.error === 'service-not-allowed'
+            ? "Voice input isn't available in this installed app — try opening the site in Safari directly instead of the home-screen icon."
+            : 'Microphone access was denied. Check your browser permissions and try again.',
+        )
         finalize(true)
       }
       // Other errors (no-speech, network, aborted) are followed by onend,
@@ -140,6 +149,7 @@ export function useVoiceInput(onFinalResult: (text: string) => void) {
       if (!sessionActiveRef.current) return
 
       if (restartCountRef.current >= MAX_AUTO_RESTARTS) {
+        onErrorRef.current?.('Voice input kept getting interrupted and had to stop. Please try again or type your question instead.')
         finalize(true)
         return
       }
@@ -154,6 +164,7 @@ export function useVoiceInput(onFinalResult: (text: string) => void) {
       try {
         next.start()
       } catch {
+        onErrorRef.current?.('Voice input stopped unexpectedly. Please try again or type your question instead.')
         finalize(true)
       }
     }
@@ -173,6 +184,7 @@ export function useVoiceInput(onFinalResult: (text: string) => void) {
     try {
       recognition.start()
     } catch {
+      onErrorRef.current?.('Could not start voice input on this device. Please type your question instead.')
       finalize(false)
       return
     }

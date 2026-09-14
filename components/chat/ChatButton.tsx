@@ -81,12 +81,17 @@ export function ChatButton() {
     start: startListening,
     stop: stopListening,
     cancel: cancelListening,
-  } = useVoiceInput(transcript => {
-    if (!transcript) return
-    const updated: Message[] = [...messagesRef.current, { role: 'user', content: transcript }]
-    setMessages(updated)
-    fetchReply(updated)
-  })
+  } = useVoiceInput(
+    transcript => {
+      if (!transcript) return
+      const updated: Message[] = [...messagesRef.current, { role: 'user', content: transcript }]
+      setMessages(updated)
+      fetchReply(updated)
+    },
+    message => {
+      setMessages(prev => [...prev, { role: 'assistant', content: message }])
+    },
+  )
 
   // Called after a spoken reply finishes — reopens the mic so the user can
   // just keep talking, as long as the drawer's still open and voice mode
