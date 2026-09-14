@@ -12,6 +12,10 @@ interface SpeechRecognitionEventLike {
   results: ArrayLike<SpeechRecognitionResultLike>
 }
 
+interface SpeechRecognitionErrorEventLike {
+  error: string
+}
+
 interface SpeechRecognitionLike extends EventTarget {
   continuous: boolean
   interimResults: boolean
@@ -19,7 +23,7 @@ interface SpeechRecognitionLike extends EventTarget {
   start(): void
   stop(): void
   onresult: ((event: SpeechRecognitionEventLike) => void) | null
-  onerror: (() => void) | null
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null
   onend: (() => void) | null
 }
 
@@ -49,10 +53,17 @@ function getSupportedServerSnapshot() {
 }
 
 // How long to wait after the last bit of speech before treating the turn as
-// finished. `continuous = true` keeps the recognizer alive across a short
-// pause ("uh", "um", a breath) instead of the browser ending it there — this
-// timer is what actually decides when a sentence is "done", not the browser.
+// finished — this timer, not the browser, decides when a sentence is "done".
 const SILENCE_TIMEOUT_MS = 2000
+
+// Chrome (and others) end the underlying recognition session on their own
+// after a pause, even with continuous=true — long before our own silence
+// timer fires. If we treated every `onend` as "the turn is over" we'd send
+// on the browser's schedule instead of ours, cutting sentences short. So
+// `onend` only finalizes when *we* already decided the turn was done
+// (sessionActiveRef false); otherwise it's the browser jumping the gun, and
+// we silently restart recognition underneath so the user never notices.
+const MAX_AUTO_RESTARTS = 6
 
 export function useVoiceInput(onFinalResult: (text: string) => void) {
   const supported = useSyncExternalStore(subscribeNever, getSupportedSnapshot, getSupportedServerSnapshot)
@@ -62,7 +73,8 @@ export function useVoiceInput(onFinalResult: (text: string) => void) {
   const onFinalResultRef = useRef(onFinalResult)
   const finalChunksRef = useRef<string[]>([])
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const flushedRef = useRef(true)
+  const sessionActiveRef = useRef(false)
+  const restartCountRef = useRef(0)
 
   useEffect(() => {
     onFinalResultRef.current = onFinalResult
@@ -75,38 +87,35 @@ export function useVoiceInput(onFinalResult: (text: string) => void) {
     }
   }, [])
 
-  // Ends the current turn: stops the recognizer and, unless already flushed
-  // (or told not to), sends whatever was captured so far.
-  const endTurn = useCallback((send: boolean) => {
+  // Ends the turn for real: stops the recognizer and, unless told not to,
+  // sends whatever was captured so far.
+  const finalize = useCallback((send: boolean) => {
     clearSilenceTimer()
-    if (!flushedRef.current) {
-      flushedRef.current = true
-      const text = finalChunksRef.current.join(' ').trim()
-      finalChunksRef.current = []
-      if (send && text) onFinalResultRef.current(text)
-    }
+    sessionActiveRef.current = false
+    const text = finalChunksRef.current.join(' ').trim()
+    finalChunksRef.current = []
     setInterimTranscript('')
+    setListening(false)
     recognitionRef.current?.stop()
+    if (send && text) onFinalResultRef.current(text)
   }, [clearSilenceTimer])
 
-  const scheduleEndTurn = useCallback(() => {
+  const scheduleFinalize = useCallback(() => {
     clearSilenceTimer()
-    silenceTimerRef.current = setTimeout(() => endTurn(true), SILENCE_TIMEOUT_MS)
-  }, [clearSilenceTimer, endTurn])
+    silenceTimerRef.current = setTimeout(() => finalize(true), SILENCE_TIMEOUT_MS)
+  }, [clearSilenceTimer, finalize])
 
-  const start = useCallback(() => {
+  const createRecognition = useCallback((): SpeechRecognitionLike | null => {
     const RecognitionCtor = getSpeechRecognitionConstructor()
-    if (!RecognitionCtor) return
+    if (!RecognitionCtor) return null
 
     const recognition = new RecognitionCtor()
     recognition.continuous = true
     recognition.interimResults = true
     recognition.lang = 'en-US'
 
-    finalChunksRef.current = []
-    flushedRef.current = false
-
     recognition.onresult = event => {
+      restartCountRef.current = 0
       let interim = ''
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i]
@@ -118,38 +127,73 @@ export function useVoiceInput(onFinalResult: (text: string) => void) {
         }
       }
       setInterimTranscript([...finalChunksRef.current, interim].filter(Boolean).join(' '))
-      scheduleEndTurn()
+      scheduleFinalize()
     }
-    recognition.onerror = () => {
-      endTurn(true)
-      setListening(false)
+    recognition.onerror = event => {
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        finalize(true)
+      }
+      // Other errors (no-speech, network, aborted) are followed by onend,
+      // which decides whether to restart or finalize.
     }
     recognition.onend = () => {
-      endTurn(true)
-      setListening(false)
+      if (!sessionActiveRef.current) return
+
+      if (restartCountRef.current >= MAX_AUTO_RESTARTS) {
+        finalize(true)
+        return
+      }
+      restartCountRef.current += 1
+
+      const next = createRecognition()
+      if (!next) {
+        finalize(true)
+        return
+      }
+      recognitionRef.current = next
+      try {
+        next.start()
+      } catch {
+        finalize(true)
+      }
     }
 
+    return recognition
+  }, [scheduleFinalize, finalize])
+
+  const start = useCallback(() => {
+    const recognition = createRecognition()
+    if (!recognition) return
+
+    finalChunksRef.current = []
+    restartCountRef.current = 0
+    sessionActiveRef.current = true
     recognitionRef.current = recognition
     setListening(true)
-    recognition.start()
-    scheduleEndTurn()
-  }, [scheduleEndTurn, endTurn])
+    try {
+      recognition.start()
+    } catch {
+      finalize(false)
+      return
+    }
+    scheduleFinalize()
+  }, [createRecognition, scheduleFinalize, finalize])
 
   // Manual "I'm done talking" — finalize and send right away instead of
   // waiting out the silence timer.
   const stop = useCallback(() => {
-    endTurn(true)
-  }, [endTurn])
+    finalize(true)
+  }, [finalize])
 
   // Abort without sending — used when tearing down (closing the drawer,
   // turning voice mode off) rather than ending a turn the user meant to ask.
   const cancel = useCallback(() => {
-    endTurn(false)
-  }, [endTurn])
+    finalize(false)
+  }, [finalize])
 
   useEffect(() => {
     return () => {
-      endTurn(false)
+      finalize(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
