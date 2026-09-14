@@ -41,7 +41,9 @@ export function ChatButton() {
         setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
         if (voiceModeRef.current) speak(data.message)
       } else {
-        const errorMessage = 'Sorry, I couldn\'t fetch your financial data right now. Please try again.'
+        const errorMessage = data.error
+          ? `Sorry, I couldn't fetch your financial data right now (${data.error}${data.detail ? `: ${data.detail}` : ''}).`
+          : 'Sorry, I couldn\'t fetch your financial data right now. Please try again.'
         setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }])
         if (voiceModeRef.current) speak(errorMessage)
       }

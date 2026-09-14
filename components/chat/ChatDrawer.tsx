@@ -62,7 +62,7 @@ export function ChatDrawer({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-2xl max-h-[80vh] flex flex-col p-0">
-        <SheetHeader className="px-4 pt-4 pb-3 border-b shrink-0 flex-row items-center justify-between space-y-0">
+        <SheetHeader className="pl-4 pr-12 pt-4 pb-3 border-b shrink-0 flex-row items-center justify-between space-y-0">
           <SheetTitle className="text-base">Financial Assistant</SheetTitle>
           {voiceSupported && (
             <Button

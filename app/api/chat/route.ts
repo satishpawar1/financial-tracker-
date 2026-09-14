@@ -124,6 +124,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message })
   } catch (err) {
     console.error('[chat]', err)
-    return NextResponse.json({ error: 'Failed to generate insight' }, { status: 500 })
+    const detail = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: 'Failed to generate insight', detail }, { status: 500 })
   }
 }
