@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Send } from 'lucide-react'
+import { Send, Mic, Volume2, VolumeX } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ChatMessage } from './ChatMessage'
+import { cn } from '@/lib/utils'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -20,9 +21,31 @@ interface Props {
   isLoading: boolean
   onInputChange: (value: string) => void
   onSend: () => void
+  voiceSupported: boolean
+  listening: boolean
+  interimTranscript: string
+  onStartListening: () => void
+  onStopListening: () => void
+  voiceMode: boolean
+  onToggleVoiceMode: () => void
 }
 
-export function ChatDrawer({ open, onOpenChange, messages, input, isLoading, onInputChange, onSend }: Props) {
+export function ChatDrawer({
+  open,
+  onOpenChange,
+  messages,
+  input,
+  isLoading,
+  onInputChange,
+  onSend,
+  voiceSupported,
+  listening,
+  interimTranscript,
+  onStartListening,
+  onStopListening,
+  voiceMode,
+  onToggleVoiceMode,
+}: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -39,8 +62,20 @@ export function ChatDrawer({ open, onOpenChange, messages, input, isLoading, onI
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-2xl max-h-[80vh] flex flex-col p-0">
-        <SheetHeader className="px-4 pt-4 pb-3 border-b shrink-0">
+        <SheetHeader className="px-4 pt-4 pb-3 border-b shrink-0 flex-row items-center justify-between space-y-0">
           <SheetTitle className="text-base">Financial Assistant</SheetTitle>
+          {voiceSupported && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              onClick={onToggleVoiceMode}
+              aria-label={voiceMode ? 'Turn off spoken replies' : 'Turn on spoken replies'}
+              aria-pressed={voiceMode}
+            >
+              {voiceMode ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </Button>
+          )}
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
@@ -74,13 +109,25 @@ export function ChatDrawer({ open, onOpenChange, messages, input, isLoading, onI
 
         <div className="shrink-0 border-t px-4 py-3 flex gap-2">
           <Input
-            value={input}
+            value={listening ? interimTranscript : input}
             onChange={e => onInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about your spending…"
-            disabled={isLoading}
+            placeholder={listening ? 'Listening…' : 'Ask about your spending…'}
+            disabled={isLoading || listening}
             className="flex-1"
           />
+          {voiceSupported && (
+            <Button
+              size="icon"
+              variant={listening ? 'default' : 'outline'}
+              onClick={listening ? onStopListening : onStartListening}
+              disabled={isLoading}
+              aria-label={listening ? 'Stop listening' : 'Ask by voice'}
+              className={cn(listening && 'animate-pulse')}
+            >
+              <Mic className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             size="icon"
             onClick={onSend}
