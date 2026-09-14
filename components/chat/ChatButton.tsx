@@ -18,14 +18,27 @@ export function ChatButton() {
   const [isLoading, setIsLoading] = useState(false)
   const [voiceMode, setVoiceMode] = useState(false)
   const voiceModeRef = useRef(voiceMode)
+  const openRef = useRef(open)
   useEffect(() => {
     voiceModeRef.current = voiceMode
   }, [voiceMode])
+  useEffect(() => {
+    openRef.current = open
+  }, [open])
 
-  function speak(text: string) {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return
+  // Speaks a reply and, if given, calls onEnd once playback finishes — used to
+  // chain "listen again" after a reply so voice mode is a real back-and-forth
+  // conversation instead of one question per mic tap.
+  function speak(text: string, onEnd?: () => void) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      onEnd?.()
+      return
+    }
     window.speechSynthesis.cancel()
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text))
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.onend = () => onEnd?.()
+    utterance.onerror = () => onEnd?.()
+    window.speechSynthesis.speak(utterance)
   }
 
   async function fetchReply(msgs: Message[]) {
@@ -39,18 +52,18 @@ export function ChatButton() {
       const data = await res.json()
       if (data.message) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
-        if (voiceModeRef.current) speak(data.message)
+        if (voiceModeRef.current) speak(data.message, continueVoiceSession)
       } else {
         const errorMessage = data.error
           ? `Sorry, I couldn't fetch your financial data right now (${data.error}${data.detail ? `: ${data.detail}` : ''}).`
           : 'Sorry, I couldn\'t fetch your financial data right now. Please try again.'
         setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }])
-        if (voiceModeRef.current) speak(errorMessage)
+        if (voiceModeRef.current) speak(errorMessage, continueVoiceSession)
       }
     } catch {
       const errorMessage = 'Sorry, I couldn\'t fetch your financial data right now. Please try again.'
       setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }])
-      if (voiceModeRef.current) speak(errorMessage)
+      if (voiceModeRef.current) speak(errorMessage, continueVoiceSession)
     } finally {
       setIsLoading(false)
     }
@@ -61,21 +74,42 @@ export function ChatButton() {
     messagesRef.current = messages
   }, [messages])
 
-  const { supported: voiceSupported, listening, interimTranscript, start: startListening, stop: stopListening } =
-    useVoiceInput(transcript => {
-      if (!transcript) return
-      const updated: Message[] = [...messagesRef.current, { role: 'user', content: transcript }]
-      setMessages(updated)
-      fetchReply(updated)
-    })
+  const {
+    supported: voiceSupported,
+    listening,
+    interimTranscript,
+    start: startListening,
+    stop: stopListening,
+    cancel: cancelListening,
+  } = useVoiceInput(transcript => {
+    if (!transcript) return
+    const updated: Message[] = [...messagesRef.current, { role: 'user', content: transcript }]
+    setMessages(updated)
+    fetchReply(updated)
+  })
+
+  // Called after a spoken reply finishes — reopens the mic so the user can
+  // just keep talking, as long as the drawer's still open and voice mode
+  // hasn't been turned off while it was speaking.
+  function continueVoiceSession() {
+    if (openRef.current && voiceModeRef.current) startListening()
+  }
 
   useEffect(() => {
     if (!open) {
       window.speechSynthesis?.cancel()
-      stopListening()
+      cancelListening()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  useEffect(() => {
+    if (!voiceMode) {
+      window.speechSynthesis?.cancel()
+      cancelListening()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceMode])
 
   useEffect(() => {
     if (open && messages.length === 0 && !isLoading) {
